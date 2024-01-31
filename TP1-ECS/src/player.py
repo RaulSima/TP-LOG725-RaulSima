@@ -2,6 +2,10 @@ import pygame
 import math
 from src.constants import CURRENT_W, CURRENT_H, JUMP_SOUND
 from src.extracter import Extracter
+from src.ecs.manager import Manager
+from src.ecs.entity import Entity
+from src.ecs.positionComponent import PositionComponent
+from src.ecs.velocityComponent import VelocityComponent
 
 
 class Player(pygame.sprite.Sprite):
@@ -9,10 +13,18 @@ class Player(pygame.sprite.Sprite):
     ANIMATION_SPEED = 4   # frames before updating the running or idle animation frame
     change_animation = 2
 
+    #ECS creation entity
+    manager = Manager()
+    playerEntity = Entity(1)
+    Manager.addEntity(playerEntity)
+
     facing_right = True
     on_ground = True
     idle_index = 1
     running_index = 0
+
+    #ECS add velocity component
+    playerEntity.addComponent("velocity", VelocityComponent(0, 0))
     speed = [0, 0]
 
     animation_frame = 'idle'
@@ -66,6 +78,9 @@ class Player(pygame.sprite.Sprite):
         self.world = world
         self.image: pygame.Surface = self.idle_images[1][0]
         self.rect: pygame.Rect = self.image.get_rect()
+        
+        #ECS add position component
+        self.playerEntity.addComponent("position", PositionComponent(self.rect.x, self.rect.y))
         collide_width = self.rect.width - 8 * self.scale_factor
         self.collide_rect: pygame.Rect = pygame.rect.Rect(
             (0, 0), (collide_width, self.rect.height))
