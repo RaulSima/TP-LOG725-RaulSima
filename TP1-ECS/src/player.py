@@ -4,6 +4,7 @@ from src.constants import CURRENT_W, CURRENT_H, JUMP_SOUND
 from src.extracter import Extracter
 from src.ecs.manager import Manager
 from src.ecs.entity import Entity
+from src.ecs.physicsSystem import PhysicsSystem
 from src.ecs.positionComponent import PositionComponent
 from src.ecs.velocityComponent import VelocityComponent
 
@@ -15,6 +16,7 @@ class Player(pygame.sprite.Sprite):
 
     #ECS creation entity
     manager = Manager()
+    physicsSystem = PhysicsSystem()
     playerEntity = Entity(1)
     manager.addEntity(playerEntity)
 
@@ -78,12 +80,12 @@ class Player(pygame.sprite.Sprite):
         self.image: pygame.Surface = self.idle_images[1][0]
         self.rect: pygame.Rect = self.image.get_rect()
         
-        #ECS add position component
-        self.playerEntity.addComponent("position", PositionComponent(self.rect.x, self.rect.y))
         collide_width = self.rect.width - 8 * self.scale_factor
         self.collide_rect: pygame.Rect = pygame.rect.Rect(
             (0, 0), (collide_width, self.rect.height))
         self.rect.left = 0.05 * CURRENT_W
+        #ECS add position component
+        self.playerEntity.addComponent("position", PositionComponent(self.rect.x, self.rect.y))
 
     def draw(self, screen):
         screen.blit(self.image, self.rect)
@@ -152,7 +154,12 @@ class Player(pygame.sprite.Sprite):
 
     def update(self, seconds_passed=1/60):
         self.gravity()
-        self.playerEntity.searchComponent("position").y += self.playerEntity.searchComponent("velocity").y
+
+        #ECS calculate the physics using the physics system
+        self.physicsSystem.execute(self.playerEntity)
+        #ECS update the position of the rect
+        self.rect.x = self.playerEntity.searchComponent("position").x
+        self.rect.y = self.playerEntity.searchComponent("position").y
 
         platform_hit_list = pygame.sprite.spritecollide(
             self, self.world.platform_list, False)  # detect collisions
@@ -161,13 +168,14 @@ class Player(pygame.sprite.Sprite):
             if self.playerEntity.searchComponent("velocity").y > 0 and self.rect.bottom > platform.rect.top + self.GROUND_ADJUSTMENT:  # going down
                 self.rect.bottom = platform.rect.top + self.GROUND_ADJUSTMENT
                 self.playerEntity.searchComponent("velocity").y = 0
-                self.playerEntity.searchComponent("position").x = self.rect.x
                 self.playerEntity.searchComponent("position").y = self.rect.y
             elif self.playerEntity.searchComponent("velocity").y < 0 and platform.rect.top < self.rect.top < platform.rect.bottom:  # going up
                 self.rect.top = platform.rect.bottom
                 self.playerEntity.searchComponent("velocity").y = 0
+                self.playerEntity.searchComponent("position").y = self.rect.y
 
-        self.playerEntity.searchComponent("position").x += self.playerEntity.searchComponent("velocity").x
+        
+
         platform_hit_list = pygame.sprite.spritecollide(
             self, self.world.platform_list, False)  # detect collisions
         for platform in platform_hit_list:
@@ -176,17 +184,12 @@ class Player(pygame.sprite.Sprite):
                     platform.rect.top + self.GROUND_ADJUSTMENT < self.rect.bottom):
                 self.rect.right = platform.rect.left  # going right
                 self.playerEntity.searchComponent("position").x = self.rect.x
-                self.playerEntity.searchComponent("position").y = self.rect.y
             elif (self.playerEntity.searchComponent("velocity").x < 0 and
                   platform.rect.right > self.rect.left and
                   platform.rect.top + self.GROUND_ADJUSTMENT < self.rect.bottom):
                 self.rect.left = platform.rect.right  # going left
                 self.playerEntity.searchComponent("position").x = self.rect.x
-                self.playerEntity.searchComponent("position").y = self.rect.y
 
-        # update the position of the sprite using the component
-        self.rect.x = self.playerEntity.searchComponent("position").x
-        self.rect.y = self.playerEntity.searchComponent("position").y
         # if self.speed == [0, 0] and will_land and self.ON_GROUND:  # if standing still
         if self.playerEntity.searchComponent("velocity").x == 0 and self.playerEntity.searchComponent("velocity").y == 0:  # if standing still
             self.update_idle()
