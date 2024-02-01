@@ -16,7 +16,7 @@ class Player(pygame.sprite.Sprite):
     #ECS creation entity
     manager = Manager()
     playerEntity = Entity(1)
-    Manager.addEntity(playerEntity)
+    manager.addEntity(playerEntity)
 
     facing_right = True
     on_ground = True
@@ -25,7 +25,6 @@ class Player(pygame.sprite.Sprite):
 
     #ECS add velocity component
     playerEntity.addComponent("velocity", VelocityComponent(0, 0))
-    speed = [0, 0]
 
     animation_frame = 'idle'
     IDLE_PATH = 'assets/sprites/idle.png'
@@ -142,82 +141,94 @@ class Player(pygame.sprite.Sprite):
                 self.on_ground = True
                 break
         if not self.on_ground:
-            self.speed[1] += self.GRAVITY_CONSTANT
-            if self.speed[1] > 0 and self.animation_frame != f'mid-air down {self.facing_right}':
+            self.playerEntity.searchComponent("velocity").y += self.GRAVITY_CONSTANT
+            # self.speed[1] += self.GRAVITY_CONSTANT
+            if self.playerEntity.searchComponent("velocity").y > 0 and self.animation_frame != f'mid-air down {self.facing_right}':
                 self.image = self.get_image(self.mid_air_images, 1)
                 self.animation_frame = f'mid-air down {self.facing_right}'
-            elif 0 > self.speed[1] >= -12 and self.animation_frame != f'mid-air up {self.facing_right}':
+            elif 0 > self.playerEntity.searchComponent("velocity").y >= -12 and self.animation_frame != f'mid-air up {self.facing_right}':
                 self.image = self.get_image(self.mid_air_images, 0)
                 self.animation_frame = f'mid-air up {self.facing_right}'
 
     def update(self, seconds_passed=1/60):
         self.gravity()
-        self.rect.y += self.speed[1]
+        self.playerEntity.searchComponent("position").y += self.playerEntity.searchComponent("velocity").y
 
         platform_hit_list = pygame.sprite.spritecollide(
             self, self.world.platform_list, False)  # detect collisions
 
         for platform in platform_hit_list:
-            if self.speed[1] > 0 and self.rect.bottom > platform.rect.top + self.GROUND_ADJUSTMENT:  # going down
+            if self.playerEntity.searchComponent("velocity").y > 0 and self.rect.bottom > platform.rect.top + self.GROUND_ADJUSTMENT:  # going down
                 self.rect.bottom = platform.rect.top + self.GROUND_ADJUSTMENT
-                self.speed[1] = 0
-            elif self.speed[1] < 0 and platform.rect.top < self.rect.top < platform.rect.bottom:  # going up
+                self.playerEntity.searchComponent("velocity").y = 0
+                self.playerEntity.searchComponent("position").x = self.rect.x
+                self.playerEntity.searchComponent("position").y = self.rect.y
+            elif self.playerEntity.searchComponent("velocity").y < 0 and platform.rect.top < self.rect.top < platform.rect.bottom:  # going up
                 self.rect.top = platform.rect.bottom
-                self.speed[1] = 0
+                self.playerEntity.searchComponent("velocity").y = 0
 
-        self.rect.x += self.speed[0]
+        self.playerEntity.searchComponent("position").x += self.playerEntity.searchComponent("velocity").x
         platform_hit_list = pygame.sprite.spritecollide(
             self, self.world.platform_list, False)  # detect collisions
         for platform in platform_hit_list:
-            if (self.speed[0] > 0 and
+            if (self.playerEntity.searchComponent("velocity").x > 0 and
                     platform.rect.left < self.rect.right and
                     platform.rect.top + self.GROUND_ADJUSTMENT < self.rect.bottom):
                 self.rect.right = platform.rect.left  # going right
-            elif (self.speed[0] < 0 and
+                self.playerEntity.searchComponent("position").x = self.rect.x
+                self.playerEntity.searchComponent("position").y = self.rect.y
+            elif (self.playerEntity.searchComponent("velocity").x < 0 and
                   platform.rect.right > self.rect.left and
                   platform.rect.top + self.GROUND_ADJUSTMENT < self.rect.bottom):
                 self.rect.left = platform.rect.right  # going left
+                self.playerEntity.searchComponent("position").x = self.rect.x
+                self.playerEntity.searchComponent("position").y = self.rect.y
+
+        # update the position of the sprite using the component
+        self.rect.x = self.playerEntity.searchComponent("position").x
+        self.rect.y = self.playerEntity.searchComponent("position").y
         # if self.speed == [0, 0] and will_land and self.ON_GROUND:  # if standing still
-        if self.speed == [0, 0]:  # if standing still
+        if self.playerEntity.searchComponent("velocity").x == 0 and self.playerEntity.searchComponent("velocity").y == 0:  # if standing still
             self.update_idle()
             self.animation_frame = 'idle'
         # animate only if running on the ground
-        elif self.speed[0] != 0 and self.on_ground:
+        elif self.playerEntity.searchComponent("velocity").x != 0 and self.on_ground:
             self.update_running()
             self.animation_frame = 'running'
         return self.rect
 
     def stop(self, pressed_keys):
 
-        if self.speed[0] == 0:
+        if self.playerEntity.searchComponent("velocity").x == 0:
             # if right keys are still pressed
             if pressed_keys[pygame.K_RIGHT] or pressed_keys[pygame.K_d]:
-                self.speed[0] += self.RUNNING_SPEED
+                self.playerEntity.searchComponent("velocity").x += self.RUNNING_SPEED
             # if left keys are still pressed
             if pressed_keys[pygame.K_LEFT] or pressed_keys[pygame.K_a]:
-                self.speed[0] -= self.RUNNING_SPEED
-            if self.speed[0] > 0:
+                self.playerEntity.searchComponent("velocity").x -= self.RUNNING_SPEED
+            if self.playerEntity.searchComponent("velocity").x > 0:
                 self.facing_right = True
-            elif self.speed[0] < 0:
+            elif self.playerEntity.searchComponent("velocity").x < 0:
                 self.facing_right = False
 
         elif (pressed_keys[pygame.K_LEFT] + pressed_keys[pygame.K_a] +
               pressed_keys[pygame.K_RIGHT] + pressed_keys[pygame.K_d] == 0):
             if self.on_ground:
                 self.image = self.get_image(self.idle_images, True)
-            self.speed[0] = 0
+            self.playerEntity.searchComponent("velocity").x = 0
 
     def force_stop(self):
-        self.speed = [0, 0]
+        self.playerEntity.searchComponent("velocity").x = 0
+        self.playerEntity.searchComponent("velocity").y = 0
 
     def go_left(self):
-        if self.speed[0] > -self.RUNNING_SPEED:
-            self.speed[0] -= self.RUNNING_SPEED
+        if self.playerEntity.searchComponent("velocity").x > -self.RUNNING_SPEED:
+            self.playerEntity.searchComponent("velocity").x -= self.RUNNING_SPEED
         self.facing_right = False
 
     def go_right(self):
-        if self.speed[0] < self.RUNNING_SPEED:
-            self.speed[0] += self.RUNNING_SPEED
+        if self.playerEntity.searchComponent("velocity").x < self.RUNNING_SPEED:
+            self.playerEntity.searchComponent("velocity").x += self.RUNNING_SPEED
         self.facing_right = True
 
     def jump(self, play_jump_sound: bool):
@@ -228,7 +239,7 @@ class Player(pygame.sprite.Sprite):
                 pygame.mixer.Channel(1).play(JUMP_SOUND)
             self.image = self.get_image(self.jump_images)
             # self.image = pygame.transform.flip(self.jump_frame, self.FACING_LEFT, False)
-            self.speed[1] = self.JUMP_SPEED
+            self.playerEntity.searchComponent("velocity").y = self.JUMP_SPEED
             self.on_ground = False
             self.animation_frame = 'jump'
 
