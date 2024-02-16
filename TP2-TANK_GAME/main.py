@@ -5,6 +5,7 @@ from src.menu import Menu
 from src.exit import Exit
 from src.mapReader import readWallMap
 from src.mapReader import readFloorMap
+from src.mapReader import readAmmoMap
 
 pygame.init()
 
@@ -20,6 +21,7 @@ clock = pygame.time.Clock()
 player = Player()
 walls = readWallMap('./maps/walls.csv')
 floors = readFloorMap('./maps/floors.csv')
+groundAmmos = readAmmoMap('./maps/ammo.csv')
 
 menu = Menu(player)
 exit = Exit(96 * 2, 96 * 3)
@@ -66,6 +68,18 @@ while playing:
             proj.kill()
                 
             break
+        
+    # check collisions between player and ground ammos
+    ammo_collisions = pygame.sprite.spritecollide(player, groundAmmos, False)
+    for ammo in ammo_collisions:
+        if(ammo.color == (255, 0, 0)):
+            player.redBullets +=1
+        if(ammo.color == (0, 255, 0)):
+            player.greenBullets +=1
+        if(ammo.color == (0, 0, 255)):
+            player.blueBullets +=1
+        ammo.kill()
+        break   
 
     # draw
     screen.fill(BG_COLOR)
@@ -82,6 +96,8 @@ while playing:
     for proj in projectiles:
         proj.draw(screen)
     menu.draw(screen)
+    for ammo in groundAmmos:
+        ammo.draw(screen)
 
     pygame.display.flip()
     clock.tick(30)
