@@ -1,0 +1,9 @@
+shader_type canvas_item;
+
+void fragment() {
+// Apply a simple blur filter
+	if(UV.x > 0.0 && UV.x < sin(TIME)){
+    	vec3 color = vec3(255, 0, 255);
+    	COLOR.rgb -= color;
+	}
+}

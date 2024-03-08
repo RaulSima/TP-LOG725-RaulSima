@@ -1,0 +1,60 @@
+[gd_scene load_steps=12 format=3 uid="uid://mptdpdl2bs45"]
+
+[ext_resource type="Shader" path="res://shaders/ex1.gdshader" id="1_ag5mu"]
+[ext_resource type="Texture2D" uid="uid://dllk3imandarc" path="res://assets/blob.png" id="1_ohtnm"]
+[ext_resource type="Shader" path="res://shaders/ex2.gdshader" id="3_001wa"]
+[ext_resource type="Shader" path="res://shaders/ex3.gdshader" id="3_p6tv3"]
+[ext_resource type="Shader" path="res://shaders/ex4.gdshader" id="4_sdsm0"]
+[ext_resource type="Shader" path="res://shaders/ex5.gdshader" id="6_mbl4c"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_xxrw8"]
+shader = ExtResource("1_ag5mu")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_es12y"]
+shader = ExtResource("3_001wa")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_s3cmb"]
+shader = ExtResource("3_p6tv3")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_orjjm"]
+shader = ExtResource("4_sdsm0")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ggk21"]
+shader = ExtResource("6_mbl4c")
+
+[node name="TP3" type="Node2D"]
+
+[node name="ex1" type="Node2D" parent="."]
+position = Vector2(81, 60)
+
+[node name="Sprite2D" type="Sprite2D" parent="ex1"]
+material = SubResource("ShaderMaterial_xxrw8")
+texture = ExtResource("1_ohtnm")
+
+[node name="ex2" type="Node2D" parent="."]
+position = Vector2(363, 61)
+
+[node name="Sprite2D" type="Sprite2D" parent="ex2"]
+material = SubResource("ShaderMaterial_es12y")
+texture = ExtResource("1_ohtnm")
+
+[node name="ex3" type="Node2D" parent="."]
+position = Vector2(642, 60)
+
+[node name="Sprite2D" type="Sprite2D" parent="ex3"]
+material = SubResource("ShaderMaterial_s3cmb")
+texture = ExtResource("1_ohtnm")
+
+[node name="ex4" type="Node2D" parent="."]
+position = Vector2(80, 241)
+
+[node name="Sprite2D" type="Sprite2D" parent="ex4"]
+material = SubResource("ShaderMaterial_orjjm")
+texture = ExtResource("1_ohtnm")
+
+[node name="ex5" type="Node2D" parent="."]
+position = Vector2(365, 248)
+
+[node name="Sprite2D" type="Sprite2D" parent="ex5"]
+material = SubResource("ShaderMaterial_ggk21")
+texture = ExtResource("1_ohtnm")
